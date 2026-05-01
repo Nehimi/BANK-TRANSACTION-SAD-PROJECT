@@ -119,3 +119,28 @@ sequenceDiagram
 ## 🗣 Presentation Summary (Pitch)
 
 > *"This project demonstrates a rigorous application of software architecture principles. By adapting the system to Java and MySQL, we utilize JavaFX for a clean Presentation Layer, while strictly enforcing the Command and Singleton design patterns in our Business Logic Layer. MySQL acts as our Data Layer, fully abstracted through DAOs via JDBC. This ensures a highly cohesive, loosely coupled system capable of reliably processing and logging financial transactions."*
+
+---
+
+## 🚀 Development Roadmap (Implementation Phases)
+
+### Phase 1: Project Setup & Core Models (Entity Layer)
+* **Maven Setup:** Configure `pom.xml` with dependencies for MySQL Connector/J and JavaFX.
+* **Models:** Create Entity classes (`BankAccount`, `Transaction`) that mirror the database tables.
+
+### Phase 2: Data Access Layer (MySQL & JDBC)
+* **DatabaseConfig:** Create utility class for managing MySQL database connections.
+* **DAOs:** Implement `BankAccountDAO` and `TransactionDAO` for CRUD operations and persisting transaction history.
+
+### Phase 3: Business Logic Layer (Command & Singleton Patterns)
+* **Command Pattern:** Implement `Command` interface, alongside `DepositCommand` and `WithdrawCommand`.
+* **Singleton Pattern:** Build `TransactionManager` to centrally process and log executed commands.
+* **Service:** Create a `BankService` to act as an intermediary between the UI and the business logic.
+
+### Phase 4: Presentation Layer (JavaFX)
+* **Views:** Build JavaFX FXML interfaces (e.g., `MainView.fxml`) for account overview and transaction inputs.
+* **Controllers:** Implement UI controllers that strictly invoke `BankService` methods without containing direct business logic.
+
+### Phase 5: Integration & Testing
+* **End-to-End Flow:** Connect JavaFX UI -> BankService -> TransactionManager -> MySQL.
+* **Testing:** Validate deposits, withdrawals, and accurate logging of transaction history in the database.
