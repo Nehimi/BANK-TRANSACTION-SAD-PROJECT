@@ -1,10 +1,13 @@
 package com.bank.business.commands;
 
+import com.bank.data.DatabaseConfig;
 import com.bank.data.models.BankAccount;
 import com.bank.data.dao.BankAccountDAO;
 import com.bank.data.dao.TransactionDAO;
 import com.bank.data.models.Transaction;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 
 public class DepositCommand implements Command {
@@ -25,17 +28,33 @@ public class DepositCommand implements Command {
         if (amount <= 0) {
             throw new IllegalArgumentException("Deposit amount must be greater than zero.");
         }
-        
-        // 1. Update the balance in the Java Model
-        account.updateBalance(amount);
-        
-        // 2. Save the updated balance to MySQL
-        accountDAO.updateAccountBalance(account);
-        
-        // 3. Log the transaction in MySQL
-        Transaction tx = new Transaction(account.getAccountNumber(), "DEPOSIT", amount, LocalDateTime.now());
-        transactionDAO.saveTransaction(tx);
-        
-        System.out.println("Successfully deposited $" + amount + " to account " + account.getAccountNumber());
+
+        try (Connection conn = DatabaseConfig.getConnection()) {
+            conn.setAutoCommit(false); // Start Database Transaction
+
+            try {
+                // 1. Update the balance in the Java Model
+                account.updateBalance(amount);
+
+                // 2. Save the updated balance to MySQL
+                accountDAO.updateAccountBalance(conn, account);
+
+                // 3. Log the transaction in MySQL
+                Transaction tx = new Transaction(account.getAccountNumber(), "DEPOSIT", amount, LocalDateTime.now());
+                transactionDAO.saveTransaction(conn, tx);
+
+                conn.commit(); // ✅ If both succeed, COMMIT the transaction
+                System.out.println("Successfully deposited $" + amount + " to account " + account.getAccountNumber());
+
+            } catch (SQLException ex) {
+                conn.rollback(); // ❌ If any error happens, ROLLBACK everything
+                account.updateBalance(-amount); // Revert the local model balance
+                System.out.println("Transaction Failed! Rolling back database changes.");
+                ex.printStackTrace();
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Database connection error: " + e.getMessage());
+        }
     }
 }
