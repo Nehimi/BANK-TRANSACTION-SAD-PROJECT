@@ -30,17 +30,14 @@ public class BankAccountDAO {
         return null;
     }
 
-    public void updateAccountBalance(BankAccount account) {
+    public void updateAccountBalance(Connection conn, BankAccount account) throws SQLException {
         String sql = "UPDATE accounts SET balance = ? WHERE account_number = ?";
-        try (Connection conn = DatabaseConfig.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setDouble(1, account.getBalance());
             stmt.setString(2, account.getAccountNumber());
             stmt.executeUpdate();
 
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 

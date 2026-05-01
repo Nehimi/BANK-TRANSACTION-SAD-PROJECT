@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TransactionManager {
-    
+
     // 1. Static variable holding the single instance (Singleton Pattern)
     private static TransactionManager instance;
-    
+
     // Keeps a history of executed commands in memory
     private List<Command> commandHistory;
 
@@ -30,7 +30,7 @@ public class TransactionManager {
         command.execute(); // Executes the deposit or withdraw logic
         commandHistory.add(command); // Logs the command in memory
     }
-    
+
     // Returns the history of executed commands
     public List<Command> getCommandHistory() {
         return commandHistory;
