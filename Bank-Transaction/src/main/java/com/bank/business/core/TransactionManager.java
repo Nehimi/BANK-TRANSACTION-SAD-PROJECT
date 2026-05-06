@@ -29,4 +29,13 @@ public class TransactionManager {
     public List<Command> getCommandHistory() {
         return commandHistory;
     }
+
+    public void undoLastCommand() {
+        if (!commandHistory.isEmpty()) {
+            Command lastCommand = commandHistory.remove(commandHistory.size() - 1);
+            lastCommand.undo();
+        } else {
+            System.out.println("⚠️ No commands to undo.");
+        }
+    }
 }

@@ -8,7 +8,16 @@ import java.sql.SQLException;
 
 public class DatabaseConfig {
 
-    private static final Dotenv dotenv = Dotenv.load();
+    private static Dotenv dotenv;
+
+    static {
+        try {
+            dotenv = Dotenv.load();
+        } catch (Exception e) {
+            // Fallback for IDEs that run the project from the parent d:\sadbProj folder
+            dotenv = Dotenv.configure().directory("./Bank-Transaction").load();
+        }
+    }
 
     private static final String URL = dotenv.get("DB_URL");
     private static final String USER = dotenv.get("DB_USER");

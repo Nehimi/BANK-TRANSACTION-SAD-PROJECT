@@ -60,4 +60,26 @@ public class WithdrawCommand implements Command {
             System.out.println("Database connection error: " + e.getMessage());
         }
     }
+
+    @Override
+    public void undo() {
+        try (Connection conn = DatabaseConfig.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                account.updateBalance(amount); // reverse withdraw (add back)
+                accountDAO.updateAccountBalance(conn, account);
+                Transaction tx = new Transaction(account.getAccountNumber(), "UNDO_WITHDRAW", amount,
+                        LocalDateTime.now());
+                transactionDAO.saveTransaction(conn, tx);
+                conn.commit();
+                System.out.println("⏪ Undid withdrawal of $" + amount + " for account " + account.getAccountNumber());
+            } catch (SQLException ex) {
+                conn.rollback();
+                account.updateBalance(-amount);
+                System.out.println("Undo Failed! Rolling back database changes.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Database connection error: " + e.getMessage());
+        }
+    }
 }

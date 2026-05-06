@@ -57,4 +57,26 @@ public class DepositCommand implements Command {
             System.out.println("Database connection error: " + e.getMessage());
         }
     }
+
+    @Override
+    public void undo() {
+        try (Connection conn = DatabaseConfig.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                account.updateBalance(-amount); // reverse deposit
+                accountDAO.updateAccountBalance(conn, account);
+                Transaction tx = new Transaction(account.getAccountNumber(), "UNDO_DEPOSIT", amount,
+                        LocalDateTime.now());
+                transactionDAO.saveTransaction(conn, tx);
+                conn.commit();
+                System.out.println("⏪ Undid deposit of $" + amount + " from account " + account.getAccountNumber());
+            } catch (SQLException ex) {
+                conn.rollback();
+                account.updateBalance(amount);
+                System.out.println("Undo Failed! Rolling back database changes.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Database connection error: " + e.getMessage());
+        }
+    }
 }

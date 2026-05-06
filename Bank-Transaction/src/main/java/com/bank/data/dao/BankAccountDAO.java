@@ -22,6 +22,7 @@ public class BankAccountDAO {
                 return new BankAccount(
                         rs.getString("account_number"),
                         rs.getString("account_holder"),
+                        rs.getString("pin_code"),
                         rs.getDouble("balance"));
             }
         } catch (SQLException e) {
@@ -42,13 +43,14 @@ public class BankAccountDAO {
     }
 
     public void createAccount(BankAccount account) {
-        String sql = "INSERT INTO accounts (account_number, account_holder, balance) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO accounts (account_number, account_holder, pin_code, balance) VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseConfig.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, account.getAccountNumber());
             stmt.setString(2, account.getAccountHolder());
-            stmt.setDouble(3, account.getBalance());
+            stmt.setString(3, account.getPinCode());
+            stmt.setDouble(4, account.getBalance());
             stmt.executeUpdate();
 
         } catch (SQLException e) {
