@@ -5,6 +5,7 @@ import com.bank.business.commands.DepositCommand;
 import com.bank.business.commands.WithdrawCommand;
 import com.bank.business.commands.TransferCommand;
 import com.bank.business.core.TransactionManager;
+import org.mindrot.jbcrypt.BCrypt;
 import com.bank.data.dao.BankAccountDAO;
 import com.bank.data.models.BankAccount;
 
@@ -32,15 +33,50 @@ public class BankService {
         return accountDAO.getAccount(accountNumber);
     }
 
+    // Called by the UI to authenticate a customer
+    public boolean authenticateCustomer(String accountNumber, String pin) {
+        BankAccount account = accountDAO.getAccount(accountNumber);
+        if (account != null) {
+            String storedPin = account.getPinCode();
+            try {
+                if (storedPin.startsWith("$2")) {
+                    return BCrypt.checkpw(pin, storedPin);
+                }
+            } catch (IllegalArgumentException e) {
+                // Not a hash
+            }
+            return pin.equals(storedPin);
+        }
+        return false;
+    }
+
     // Called by the Admin UI to create a new account
     public void createAccount(BankAccount account) throws java.sql.SQLException {
-        // Simple validation
-        if (account.getAccountNumber() == null || account.getAccountNumber().length() < 5) {
-            throw new IllegalArgumentException("Account Number must be at least 5 characters.");
+        // 1. Account Number Validation
+        if (account.getAccountNumber() == null || !account.getAccountNumber().matches("\\d{5,20}")) {
+            throw new IllegalArgumentException("Account Number must be 5-20 digits.");
         }
+
+        // 2. Account Holder Name Validation (Only letters and spaces)
+        if (account.getAccountHolder() == null || !account.getAccountHolder().matches("^[a-zA-Z\\s]{3,100}$")) {
+            throw new IllegalArgumentException(
+                    "Account Holder Name must be 3-100 characters and contain only letters.");
+        }
+
+        // 3. PIN Validation (Must be 4 digits)
+        if (account.getPinCode() == null || !account.getPinCode().matches("\\d{4}")) {
+            throw new IllegalArgumentException("PIN must be exactly 4 digits.");
+        }
+
+        // 4. Initial Balance Validation
+        if (account.getBalance() < 0) {
+            throw new IllegalArgumentException("Initial deposit cannot be negative.");
+        }
+
         if (accountDAO.getAccount(account.getAccountNumber()) != null) {
             throw new IllegalArgumentException("Account already exists!");
         }
+
         accountDAO.createAccount(account);
     }
 
@@ -61,6 +97,9 @@ public class BankService {
 
     // Called by the UI to process a deposit
     public void processDeposit(String accountNumber, double amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Deposit amount must be greater than zero.");
+        }
         BankAccount account = accountDAO.getAccount(accountNumber);
         if (account != null) {
             Command deposit = new DepositCommand(account, amount);
@@ -72,8 +111,14 @@ public class BankService {
 
     // Called by the UI to process a withdrawal
     public void processWithdrawal(String accountNumber, double amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Withdrawal amount must be greater than zero.");
+        }
         BankAccount account = accountDAO.getAccount(accountNumber);
         if (account != null) {
+            if (account.getBalance() < amount) {
+                throw new IllegalArgumentException("Insufficient funds!");
+            }
             Command withdraw = new WithdrawCommand(account, amount);
             transactionManager.executeCommand(withdraw);
         } else {
@@ -105,9 +150,12 @@ public class BankService {
         if (account == null) {
             throw new IllegalArgumentException("Account not found!");
         }
-        if (!account.getPinCode().equals(oldPin)) {
+
+        // Verify current PIN using BCrypt
+        if (!BCrypt.checkpw(oldPin, account.getPinCode())) {
             throw new IllegalArgumentException("Incorrect current PIN!");
         }
+
         if (newPin.length() != 4) {
             throw new IllegalArgumentException("New PIN must be exactly 4 digits!");
         }

@@ -3,6 +3,7 @@ package com.bank.business.commands;
 import com.bank.data.DatabaseConfig;
 import com.bank.data.models.BankAccount;
 import com.bank.data.dao.BankAccountDAO;
+import com.bank.data.dao.CommandHistoryDAO;
 import com.bank.data.dao.TransactionDAO;
 import com.bank.data.models.Transaction;
 
@@ -15,12 +16,14 @@ public class DepositCommand implements Command {
     private double amount;
     private BankAccountDAO accountDAO;
     private TransactionDAO transactionDAO;
+    private CommandHistoryDAO commandHistoryDAO;
 
     public DepositCommand(BankAccount account, double amount) {
         this.account = account;
         this.amount = amount;
         this.accountDAO = new BankAccountDAO();
         this.transactionDAO = new TransactionDAO();
+        this.commandHistoryDAO = new CommandHistoryDAO();
     }
 
     @Override
@@ -33,15 +36,27 @@ public class DepositCommand implements Command {
             conn.setAutoCommit(false);
 
             try {
-                // 1. Update the balance in the Java Model
-                account.updateBalance(amount);
+                // 1. Lock the row to prevent concurrent modifications
+                BankAccount lockedAccount = accountDAO.getAccountForUpdate(conn, account.getAccountNumber());
+                if (lockedAccount == null) {
+                    throw new SQLException("Account not found during transaction!");
+                }
 
-                // 2. Save the updated balance to MySQL
-                accountDAO.updateAccountBalance(conn, account);
+                // 2. Update the balance using the locked (fresh) data
+                lockedAccount.updateBalance(amount);
 
-                // 3. Log the transaction in MySQL
+                // 3. Save the updated balance to MySQL
+                accountDAO.updateAccountBalance(conn, lockedAccount);
+
+                // 4. Log the transaction in MySQL
                 Transaction tx = new Transaction(account.getAccountNumber(), "DEPOSIT", amount, LocalDateTime.now());
                 transactionDAO.saveTransaction(conn, tx);
+
+                // 5. Save command to history for persistent undo
+                commandHistoryDAO.saveCommand(conn, account.getAccountNumber(), "DEPOSIT", amount, null, LocalDateTime.now());
+
+                // 6. Sync the in-memory object
+                account.setBalance(lockedAccount.getBalance());
 
                 conn.commit();
                 System.out.println("Successfully deposited $" + amount + " to account " + account.getAccountNumber());
