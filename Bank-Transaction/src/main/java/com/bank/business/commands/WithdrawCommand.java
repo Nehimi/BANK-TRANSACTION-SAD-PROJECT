@@ -33,7 +33,7 @@ public class WithdrawCommand implements Command {
         }
 
         try (Connection conn = DatabaseConfig.getConnection()) {
-            conn.setAutoCommit(false); // Start Database Transaction
+            conn.setAutoCommit(false);
 
             try {
                 // 1. Update the balance in the Java Model (Subtract amount)
@@ -46,16 +46,38 @@ public class WithdrawCommand implements Command {
                 Transaction tx = new Transaction(account.getAccountNumber(), "WITHDRAW", amount, LocalDateTime.now());
                 transactionDAO.saveTransaction(conn, tx);
 
-                conn.commit(); // ✅ If both succeed, COMMIT the transaction
+                conn.commit();
                 System.out.println("Successfully withdrew $" + amount + " from account " + account.getAccountNumber());
 
             } catch (SQLException ex) {
-                conn.rollback(); // ❌ If any error happens, ROLLBACK everything
-                account.updateBalance(amount); // Revert the local model balance back
+                conn.rollback();
+                account.updateBalance(amount);
                 System.out.println("Transaction Failed! Rolling back database changes.");
                 ex.printStackTrace();
             }
 
+        } catch (SQLException e) {
+            System.out.println("Database connection error: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void undo() {
+        try (Connection conn = DatabaseConfig.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                account.updateBalance(amount); // reverse withdraw (add back)
+                accountDAO.updateAccountBalance(conn, account);
+                Transaction tx = new Transaction(account.getAccountNumber(), "UNDO_WITHDRAW", amount,
+                        LocalDateTime.now());
+                transactionDAO.saveTransaction(conn, tx);
+                conn.commit();
+                System.out.println("⏪ Undid withdrawal of $" + amount + " for account " + account.getAccountNumber());
+            } catch (SQLException ex) {
+                conn.rollback();
+                account.updateBalance(-amount);
+                System.out.println("Undo Failed! Rolling back database changes.");
+            }
         } catch (SQLException e) {
             System.out.println("Database connection error: " + e.getMessage());
         }

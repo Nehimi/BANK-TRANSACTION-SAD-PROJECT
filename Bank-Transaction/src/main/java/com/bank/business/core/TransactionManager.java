@@ -6,18 +6,13 @@ import java.util.List;
 
 public class TransactionManager {
 
-    // 1. Static variable holding the single instance (Singleton Pattern)
     private static TransactionManager instance;
-
-    // Keeps a history of executed commands in memory
     private List<Command> commandHistory;
 
-    // 2. Private constructor prevents other classes from creating new objects
     private TransactionManager() {
         commandHistory = new ArrayList<>();
     }
 
-    // 3. Public static method to get the single instance globally
     public static TransactionManager getInstance() {
         if (instance == null) {
             instance = new TransactionManager();
@@ -27,12 +22,20 @@ public class TransactionManager {
 
     // Method to execute commands centrally
     public void executeCommand(Command command) {
-        command.execute(); // Executes the deposit or withdraw logic
+        command.execute();
         commandHistory.add(command); // Logs the command in memory
     }
 
-    // Returns the history of executed commands
     public List<Command> getCommandHistory() {
         return commandHistory;
+    }
+
+    public void undoLastCommand() {
+        if (!commandHistory.isEmpty()) {
+            Command lastCommand = commandHistory.remove(commandHistory.size() - 1);
+            lastCommand.undo();
+        } else {
+            System.out.println("⚠️ No commands to undo.");
+        }
     }
 }

@@ -3,11 +3,13 @@ package com.bank.data.models;
 public class BankAccount {
     private String accountNumber;
     private String accountHolder;
+    private String pinCode;
     private double balance;
 
-    public BankAccount(String accountNumber, String accountHolder, double balance) {
+    public BankAccount(String accountNumber, String accountHolder, String pinCode, double balance) {
         this.accountNumber = accountNumber;
         this.accountHolder = accountHolder;
+        this.pinCode = pinCode;
         this.balance = balance;
     }
 
@@ -18,6 +20,10 @@ public class BankAccount {
 
     public String getAccountHolder() {
         return accountHolder;
+    }
+
+    public String getPinCode() {
+        return pinCode;
     }
 
     public double getBalance() {

@@ -23,4 +23,29 @@ public class TransactionDAO {
 
         }
     }
+
+    // Get transaction history for an account
+    public java.util.List<Transaction> getTransactionsByAccount(String accountNumber) {
+        java.util.List<Transaction> history = new java.util.ArrayList<>();
+        String sql = "SELECT * FROM transactions WHERE account_number = ? ORDER BY timestamp DESC";
+
+        try (Connection conn = com.bank.data.DatabaseConfig.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, accountNumber);
+            java.sql.ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Transaction t = new Transaction(
+                        rs.getString("account_number"),
+                        rs.getString("type"),
+                        rs.getDouble("amount"),
+                        rs.getTimestamp("timestamp").toLocalDateTime());
+                history.add(t);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return history;
+    }
 }
