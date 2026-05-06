@@ -6,7 +6,7 @@ USE bank_db;
 CREATE TABLE IF NOT EXISTS accounts (
     account_number VARCHAR(20) PRIMARY KEY,
     account_holder VARCHAR(100) NOT NULL,
-    pin_code VARCHAR(4) NOT NULL DEFAULT '1234',
+    pin_code VARCHAR(255) NOT NULL DEFAULT '1234',
     balance DECIMAL(15, 2) NOT NULL DEFAULT 0.00
 );
 
@@ -29,6 +29,18 @@ ON DUPLICATE KEY UPDATE account_holder='Abebe Kebede', pin_code='1234';
 CREATE TABLE IF NOT EXISTS admins (
     username VARCHAR(50) PRIMARY KEY,
     password VARCHAR(255) NOT NULL
+);
+
+-- Table for Persistent Undo (Command History)
+CREATE TABLE IF NOT EXISTS command_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    account_number VARCHAR(20) NOT NULL,
+    command_type VARCHAR(30) NOT NULL,  -- 'DEPOSIT', 'WITHDRAW', 'TRANSFER'
+    amount DECIMAL(15, 2) NOT NULL,
+    destination_account VARCHAR(20) DEFAULT NULL,  -- Only for TRANSFER commands
+    is_undone BOOLEAN DEFAULT FALSE,
+    executed_at DATETIME NOT NULL,
+    FOREIGN KEY (account_number) REFERENCES accounts(account_number) ON DELETE CASCADE
 );
 
 -- Insert a default admin account

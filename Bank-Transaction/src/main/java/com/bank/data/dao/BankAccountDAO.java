@@ -2,6 +2,7 @@ package com.bank.data.dao;
 
 import com.bank.data.DatabaseConfig;
 import com.bank.data.models.BankAccount;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,6 +32,24 @@ public class BankAccountDAO {
         return null;
     }
 
+    // New method for Row-Level Locking (Concurrency Prevention)
+    public BankAccount getAccountForUpdate(Connection conn, String accountNumber) throws SQLException {
+        String sql = "SELECT * FROM accounts WHERE account_number = ? FOR UPDATE";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, accountNumber);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return new BankAccount(
+                        rs.getString("account_number"),
+                        rs.getString("account_holder"),
+                        rs.getString("pin_code"),
+                        rs.getDouble("balance"));
+            }
+        }
+        return null;
+    }
+
     public void updateAccountBalance(Connection conn, BankAccount account) throws SQLException {
         String sql = "UPDATE accounts SET balance = ? WHERE account_number = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -47,9 +66,12 @@ public class BankAccountDAO {
         try (Connection conn = DatabaseConfig.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
+            // Hash the PIN before storing
+            String hashedPin = BCrypt.hashpw(account.getPinCode(), BCrypt.gensalt());
+
             stmt.setString(1, account.getAccountNumber());
             stmt.setString(2, account.getAccountHolder());
-            stmt.setString(3, account.getPinCode());
+            stmt.setString(3, hashedPin);
             stmt.setDouble(4, account.getBalance());
             stmt.executeUpdate();
 
@@ -60,7 +82,11 @@ public class BankAccountDAO {
         String sql = "UPDATE accounts SET pin_code = ? WHERE account_number = ?";
         try (Connection conn = DatabaseConfig.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, newPin);
+
+            // Hash the new PIN
+            String hashedPin = BCrypt.hashpw(newPin, BCrypt.gensalt());
+
+            stmt.setString(1, hashedPin);
             stmt.setString(2, accountNumber);
             stmt.executeUpdate();
         }
