@@ -82,4 +82,9 @@ public class WithdrawCommand implements Command {
             System.out.println("Database connection error: " + e.getMessage());
         }
     }
+
+    @Override
+    public String getAccountNumber() {
+        return account.getAccountNumber();
+    }
 }
