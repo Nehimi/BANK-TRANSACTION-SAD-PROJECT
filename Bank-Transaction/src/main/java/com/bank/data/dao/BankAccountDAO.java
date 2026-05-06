@@ -42,7 +42,7 @@ public class BankAccountDAO {
         }
     }
 
-    public void createAccount(BankAccount account) {
+    public void createAccount(BankAccount account) throws SQLException {
         String sql = "INSERT INTO accounts (account_number, account_holder, pin_code, balance) VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseConfig.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -53,8 +53,16 @@ public class BankAccountDAO {
             stmt.setDouble(4, account.getBalance());
             stmt.executeUpdate();
 
-        } catch (SQLException e) {
-            System.out.println("Error creating account: " + e.getMessage());
+        }
+    }
+
+    public void updatePin(String accountNumber, String newPin) throws SQLException {
+        String sql = "UPDATE accounts SET pin_code = ? WHERE account_number = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, newPin);
+            stmt.setString(2, accountNumber);
+            stmt.executeUpdate();
         }
     }
 }

@@ -18,7 +18,8 @@ public class Transaction {
         this.timestamp = timestamp;
     }
 
-    // Constructor without ID (when creating a new transaction before saving to Database)
+    // Constructor without ID (when creating a new transaction before saving to
+    // Database)
     public Transaction(String accountNumber, String type, double amount, LocalDateTime timestamp) {
         this.accountNumber = accountNumber;
         this.type = type;

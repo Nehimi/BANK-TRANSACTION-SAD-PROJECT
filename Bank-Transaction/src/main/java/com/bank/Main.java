@@ -12,15 +12,15 @@ public class Main {
         BankService bankService = new BankService();
 
         System.out.println("=========================================");
-        System.out.println("🌟WELCOME TO THE BANKING SYSTEM LAUNCHER 🌟");
+        System.out.println("WELCOME TO THE BANKING SYSTEM LAUNCHER");
         System.out.println("=========================================");
 
         while (true) {
             System.out.println("\nSelect Login Type:");
-            System.out.println("1️⃣ Customer Login");
-            System.out.println("2️⃣ Admin Login");
-            System.out.println("3️⃣ Exit System");
-            System.out.print("👉 Choose (1-3): ");
+            System.out.println("1. Customer Login");
+            System.out.println("2. Admin Login");
+            System.out.println("3. Exit System");
+            System.out.print("> Choose (1-3): ");
 
             String role = scanner.nextLine().trim();
 
@@ -31,10 +31,10 @@ public class Main {
                 AdminCLI admin = new AdminCLI(bankService, scanner);
                 admin.start();
             } else if (role.equals("3") || role.equalsIgnoreCase("exit")) {
-                System.out.println("👋 Shutting down... Goodbye!");
+                System.out.println(" Shutting down... Goodbye!");
                 break;
             } else {
-                System.out.println("⚠️ Invalid option.");
+                System.out.println(" Invalid option.");
             }
         }
 

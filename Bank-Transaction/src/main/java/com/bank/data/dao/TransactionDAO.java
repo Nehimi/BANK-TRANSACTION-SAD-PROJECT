@@ -48,4 +48,26 @@ public class TransactionDAO {
         }
         return history;
     }
+    // Get all system transactions
+    public java.util.List<Transaction> getAllTransactions() {
+        java.util.List<Transaction> history = new java.util.ArrayList<>();
+        String sql = "SELECT * FROM transactions ORDER BY timestamp DESC";
+
+        try (Connection conn = com.bank.data.DatabaseConfig.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                java.sql.ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Transaction t = new Transaction(
+                        rs.getString("account_number"),
+                        rs.getString("type"),
+                        rs.getDouble("amount"),
+                        rs.getTimestamp("timestamp").toLocalDateTime());
+                history.add(t);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return history;
+    }
 }
