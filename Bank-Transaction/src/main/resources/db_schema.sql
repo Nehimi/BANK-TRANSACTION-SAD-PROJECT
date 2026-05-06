@@ -21,5 +21,5 @@ CREATE TABLE IF NOT EXISTS transactions (
 
 -- Insert a dummy account for testing purposes
 INSERT INTO accounts (account_number, account_holder, balance) 
-VALUES ('10001', 'Abebe Kebede', 1000.00)
+VALUES ('10002489897582', 'Abebe Kebede', 1000.00)
 ON DUPLICATE KEY UPDATE account_holder='Abebe Kebede';

@@ -14,7 +14,7 @@ public class BankService {
     public BankService() {
         this.accountDAO = new BankAccountDAO();
         // Accessing the Singleton instance
-        this.transactionManager = TransactionManager.getInstance(); 
+        this.transactionManager = TransactionManager.getInstance();
     }
 
     // Called by the UI to fetch account details
