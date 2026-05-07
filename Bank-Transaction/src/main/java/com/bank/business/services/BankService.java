@@ -174,4 +174,27 @@ public class BankService {
 
         accountDAO.updateAccountStatus(accountNumber, newStatus.toUpperCase());
     }
+
+    public java.util.List<BankAccount> getAllAccounts() {
+        return accountDAO.getAllAccounts();
+    }
+
+    public void adminResetPin(String accountNumber, String newPin) throws java.sql.SQLException {
+        BankAccount account = accountDAO.getAccount(accountNumber);
+        if (account == null) {
+            throw new IllegalArgumentException("Account not found!");
+        }
+        if (newPin == null || newPin.length() != 4) {
+            throw new IllegalArgumentException("New PIN must be exactly 4 digits!");
+        }
+        accountDAO.updatePin(accountNumber, newPin);
+    }
+
+    public void deleteAccount(String accountNumber) throws java.sql.SQLException {
+        BankAccount account = accountDAO.getAccount(accountNumber);
+        if (account == null) {
+            throw new IllegalArgumentException("Account not found!");
+        }
+        accountDAO.deleteAccount(accountNumber);
+    }
 }

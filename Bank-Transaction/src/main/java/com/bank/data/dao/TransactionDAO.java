@@ -61,6 +61,7 @@ public class TransactionDAO {
 
             while (rs.next()) {
                 Transaction t = new Transaction(
+                        rs.getInt("transaction_id"),
                         rs.getString("account_number"),
                         rs.getString("type"),
                         rs.getDouble("amount"),

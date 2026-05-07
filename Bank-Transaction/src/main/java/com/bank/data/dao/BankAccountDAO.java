@@ -105,4 +105,34 @@ public class BankAccountDAO {
             stmt.executeUpdate();
         }
     }
+
+    public java.util.List<BankAccount> getAllAccounts() {
+        java.util.List<BankAccount> accounts = new java.util.ArrayList<>();
+        String sql = "SELECT * FROM accounts";
+        try (Connection conn = DatabaseConfig.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                accounts.add(new BankAccount(
+                        rs.getString("account_number"),
+                        rs.getString("account_holder"),
+                        rs.getString("pin_code"),
+                        rs.getDouble("balance"),
+                        rs.getString("status")));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return accounts;
+    }
+
+    public void deleteAccount(String accountNumber) throws SQLException {
+        String sql = "DELETE FROM accounts WHERE account_number = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, accountNumber);
+            stmt.executeUpdate();
+        }
+    }
 }

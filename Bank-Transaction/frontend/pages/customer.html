@@ -5,14 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EthioBank | Premium Digital Banking</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body>
-    <!-- Background Elements -->
-    <div class="blob"></div>
-    <div class="blob-2"></div>
+<body class="home-body">
 
     <!-- Navigation -->
     <nav class="nav-container">
@@ -69,10 +66,6 @@
                     <button onclick="login('customer')" class="btn btn-primary full-width">
                         <span>Sign In</span> <i class="fa-solid fa-arrow-right"></i>
                     </button>
-                    <div class="divider"><span>OR</span></div>
-                    <button onclick="login('admin')" class="btn btn-outline full-width">
-                        <i class="fa-solid fa-user-shield"></i> Admin Access
-                    </button>
                 </div>
 
                 <div class="card-footer">
@@ -92,95 +85,75 @@
                     <div class="card-top">
                         <div class="balance-info">
                             <span class="label">Available Balance</span>
-                            <h2 class="amount">ETB <span id="display-balance">0.00</span></h2>
+                            <div class="balance-row" onclick="toggleBalance()">
+                                <h2 class="amount">ETB <span id="display-balance">0.00</span></h2>
+                                <button class="btn-toggle-visibility">
+                                    <i id="balance-eye" class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <div id="display-status" class="status-indicator">...</div>
                     </div>
-                    
-                    <div class="card-actions">
-                        <button onclick="openModal('transfer')" class="btn btn-glass">
-                            <i class="fa-solid fa-paper-plane"></i> Transfer
-                        </button>
-                        <button onclick="openModal('deposit')" class="btn btn-glass">
-                            <i class="fa-solid fa-wallet"></i> Deposit
-                        </button>
-                    </div>
-                    
+
                     <div class="card-bottom">
                         <div class="card-chip"></div>
+                        <div class="card-type">PREMIUM</div>
                         <span class="card-number">**** **** **** <span id="last-four">0000</span></span>
                     </div>
                 </div>
 
-                <!-- Transaction History -->
-                <div class="glass-card history-card animate-slide-up" style="animation-delay: 0.1s;">
-                    <div class="card-header-flex">
-                        <h3>Recent Transactions</h3>
-                        <button onclick="showAllTransactions()" class="btn btn-text">View All <i class="fa-solid fa-chevron-right"></i></button>
-                    </div>
-                    
-                    <div class="table-container">
-                        <table id="transaction-table">
-                            <thead>
-                                <tr>
-                                    <th>Transaction</th>
-                                    <th>Amount</th>
-                                    <th>Date & Time</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Data will be injected here -->
-                                <tr>
-                                    <td colspan="4" style="text-align: center; padding: 3rem;">
-                                        <div class="loading-spinner"></div>
-                                        <p>Fetching your transactions...</p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Sidebar -->
-            <aside class="dashboard-sidebar">
-                <div class="glass-card quick-action-card animate-slide-left">
-                    <h3>Quick Withdraw</h3>
-                    <p>Enter an amount to withdraw instantly from your account.</p>
-                    <div class="input-group">
-                        <div class="input-wrapper">
-                            <i class="fa-solid fa-money-bill-wave"></i>
-                            <input type="number" id="quick-withdraw-amount" placeholder="0.00">
+                <div class="glass-card services-card animate-slide-up" style="animation-delay: 0.2s;">
+                    <div class="section-header">
+                        <h3>Bank Services</h3>
+                        <p>Manage your account and transactions</p>
+                    </div>
+                    <div class="services-grid">
+                        <div class="service-item" onclick="openModal('deposit')">
+                            <div class="service-icon"><i class="fa-solid fa-circle-plus"></i></div>
+                            <div class="service-label">Deposit</div>
+                        </div>
+                        <div class="service-item" onclick="openModal('withdraw')">
+                            <div class="service-icon"><i class="fa-solid fa-circle-minus"></i></div>
+                            <div class="service-label">Withdraw</div>
+                        </div>
+                        <div class="service-item" onclick="openModal('transfer')">
+                            <div class="service-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                            <div class="service-label">Transfer</div>
+                        </div>
+                        <div class="service-item" onclick="showAllTransactions()">
+                            <div class="service-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                            <div class="service-label">History</div>
+                        </div>
+                        <div class="service-item" onclick="openModal('change-pin')">
+                            <div class="service-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                            <div class="service-label">Change PIN</div>
                         </div>
                     </div>
-                    <button onclick="processQuickAction('withdraw')" class="btn btn-primary full-width">
-                        Withdraw Now
-                    </button>
                 </div>
 
-                <div class="promo-card animate-slide-left" style="animation-delay: 0.1s;">
-                    <div class="promo-content">
-                        <h4>Earn 5% Interest</h4>
-                        <p>Grow your savings with our premium investment plans.</p>
-                        <button class="btn btn-secondary btn-small">Learn More</button>
-                    </div>
-                    <div class="promo-icon">
-                        <i class="fa-solid fa-chart-line"></i>
-                    </div>
-                </div>
+            </div>
+        </div>
 
-                <div class="support-card animate-slide-left" style="animation-delay: 0.2s;">
-                    <div class="support-avatar">
-                        <i class="fa-solid fa-headset"></i>
-                    </div>
-                    <div class="support-info">
-                        <h5>Need Assistance?</h5>
-                        <p>Our experts are online.</p>
-                        <button class="btn btn-link">Chat with Support</button>
-                    </div>
+        <!-- Sidebar -->
+        </div>
+
+        <footer class="dashboard-footer animate-fade">
+            <div class="footer-item">
+                <i class="fa-solid fa-chart-line"></i>
+                <div>
+                    <h4>Earn 5% Interest</h4>
+                    <p>Grow your savings with our premium investment plans.</p>
                 </div>
-            </aside>
+            </div>
+            <div class="footer-item">
+                <i class="fa-solid fa-headset"></i>
+                <div>
+                    <h5>Need Assistance?</h5>
+                    <p>Our experts are online. <a href="#">Chat with Support</a></p>
+                </div>
+            </div>
+        </footer>
         </div>
     </section>
 
@@ -199,7 +172,7 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="../js/customer.js"></script>
 </body>
 
 </html>
