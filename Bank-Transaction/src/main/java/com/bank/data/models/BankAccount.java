@@ -15,6 +15,8 @@ public class BankAccount {
         this.status = status;
     }
 
+    public BankAccount() {}
+
     // Getters
     public String getAccountNumber() {
         return accountNumber;

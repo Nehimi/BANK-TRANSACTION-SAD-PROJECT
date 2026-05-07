@@ -37,6 +37,7 @@ public class TransactionDAO {
 
             while (rs.next()) {
                 Transaction t = new Transaction(
+                        rs.getInt("transaction_id"),
                         rs.getString("account_number"),
                         rs.getString("type"),
                         rs.getDouble("amount"),
@@ -48,6 +49,7 @@ public class TransactionDAO {
         }
         return history;
     }
+
     // Get all system transactions
     public java.util.List<Transaction> getAllTransactions() {
         java.util.List<Transaction> history = new java.util.ArrayList<>();
