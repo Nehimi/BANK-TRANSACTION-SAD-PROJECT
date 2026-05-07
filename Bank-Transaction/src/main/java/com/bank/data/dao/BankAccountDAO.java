@@ -24,7 +24,8 @@ public class BankAccountDAO {
                         rs.getString("account_number"),
                         rs.getString("account_holder"),
                         rs.getString("pin_code"),
-                        rs.getDouble("balance"));
+                        rs.getDouble("balance"),
+                        rs.getString("status"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -44,7 +45,8 @@ public class BankAccountDAO {
                         rs.getString("account_number"),
                         rs.getString("account_holder"),
                         rs.getString("pin_code"),
-                        rs.getDouble("balance"));
+                        rs.getDouble("balance"),
+                        rs.getString("status"));
             }
         }
         return null;
@@ -62,7 +64,7 @@ public class BankAccountDAO {
     }
 
     public void createAccount(BankAccount account) throws SQLException {
-        String sql = "INSERT INTO accounts (account_number, account_holder, pin_code, balance) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO accounts (account_number, account_holder, pin_code, balance, status) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConfig.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -73,6 +75,7 @@ public class BankAccountDAO {
             stmt.setString(2, account.getAccountHolder());
             stmt.setString(3, hashedPin);
             stmt.setDouble(4, account.getBalance());
+            stmt.setString(5, account.getStatus() != null ? account.getStatus() : "ACTIVE");
             stmt.executeUpdate();
 
         }
@@ -87,6 +90,17 @@ public class BankAccountDAO {
             String hashedPin = BCrypt.hashpw(newPin, BCrypt.gensalt());
 
             stmt.setString(1, hashedPin);
+            stmt.setString(2, accountNumber);
+            stmt.executeUpdate();
+        }
+    }
+
+    public void updateAccountStatus(String accountNumber, String newStatus) throws SQLException {
+        String sql = "UPDATE accounts SET status = ? WHERE account_number = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, newStatus);
             stmt.setString(2, accountNumber);
             stmt.executeUpdate();
         }

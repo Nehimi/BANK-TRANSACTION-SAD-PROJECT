@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EthioBank - Premium Digital Banking</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="container" style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2rem;">
+        <div class="logo" style="font-size: 1.5rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            ETHIOBANK
+        </div>
+        <div id="user-info" style="display: none; align-items: center; gap: 1rem;">
+            <span id="nav-username" style="font-weight: 500;">Abebe Kebede</span>
+            <button onclick="logout()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Login Section -->
+    <section id="login-section" class="container" style="display: flex; justify-content: center; align-items: center; flex: 1;">
+        <div class="glass-card animate-fade" style="width: 100%; max-width: 450px;">
+            <h2 style="text-align: center; margin-bottom: 0.5rem;">Welcome Back</h2>
+            <p style="text-align: center; margin-bottom: 2rem;">Please enter your account details</p>
+            
+            <div class="input-group">
+                <label>Account Number</label>
+                <input type="text" id="login-account" placeholder="e.g. 1000123456">
+            </div>
+            
+            <div class="input-group">
+                <label>PIN Code</label>
+                <input type="password" id="login-pin" placeholder="••••">
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                <button onclick="login('customer')" class="btn btn-primary" style="flex: 1; justify-content: center;">Customer Login</button>
+                <button onclick="login('admin')" class="btn btn-secondary" style="flex: 1; justify-content: center;">Admin</button>
+            </div>
+            
+            <p style="font-size: 0.8rem; text-align: center;">Secure 256-bit SSL Encrypted Connection</p>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard-section" class="container" style="display: none;">
+        <div class="dashboard-grid">
+            <!-- Left Side: Balance & History -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                <!-- Balance Card -->
+                <div class="balance-card animate-fade">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <div class="balance-label">Total Balance</div>
+                            <div class="balance-amount">$<span id="display-balance">1,240.50</span></div>
+                        </div>
+                        <span id="display-status" class="status-badge status-active">Active</span>
+                    </div>
+                    <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                        <button onclick="openModal('transfer')" class="btn btn-secondary" style="background: rgba(255,255,255,0.15); border: none;">
+                            <i class="fa-solid fa-paper-plane"></i> Transfer
+                        </button>
+                        <button onclick="openModal('deposit')" class="btn btn-secondary" style="background: rgba(255,255,255,0.15); border: none;">
+                            <i class="fa-solid fa-plus"></i> Deposit
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Transaction History -->
+                <div class="glass-card animate-fade" style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>Recent Transactions</h2>
+                        <button class="btn btn-secondary" style="font-size: 0.8rem;">View All</button>
+                    </div>
+                    <table id="transaction-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Transactions will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right Side: Quick Actions & Profile -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                <div class="glass-card animate-fade">
+                    <h3>Quick Withdraw</h3>
+                    <p style="margin-bottom: 1.5rem;">Withdraw cash instantly from your account.</p>
+                    <div class="input-group">
+                        <input type="number" id="quick-withdraw-amount" placeholder="Enter amount">
+                    </div>
+                    <button onclick="processQuickAction('withdraw')" class="btn btn-primary" style="width: 100%; justify-content: center;">Withdraw Now</button>
+                </div>
+
+                <div class="glass-card animate-fade" style="background: var(--secondary-gradient); border: none;">
+                    <h3 style="color: white;">Need Help?</h3>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 1.5rem;">Our customer support is available 24/7 for your banking needs.</p>
+                    <button class="btn btn-secondary" style="background: rgba(255,255,255,0.2); border: none; width: 100%; justify-content: center;">Contact Support</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modals (Simplified) -->
+    <div id="modal-overlay" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 100; justify-content: center; align-items: center;">
+        <div class="glass-card" style="width: 100%; max-width: 400px;">
+            <h2 id="modal-title">Action</h2>
+            <div id="modal-body"></div>
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button onclick="closeModal()" class="btn btn-secondary" style="flex: 1; justify-content: center;">Cancel</button>
+                <button id="modal-confirm-btn" class="btn btn-primary" style="flex: 1; justify-content: center;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

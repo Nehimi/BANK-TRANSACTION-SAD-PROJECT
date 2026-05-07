@@ -33,8 +33,21 @@ public class TransferCommand implements Command {
         if (amount <= 0) {
             throw new IllegalArgumentException("Transfer amount must be greater than zero.");
         }
-        if (sourceAccount.getBalance() < amount) {
-            throw new IllegalArgumentException("Insufficient funds in source account!");
+
+        // Calculate 1% service fee
+        double fee = amount * 0.01;
+        double totalDeduction = amount + fee;
+
+        if (sourceAccount.getBalance() < totalDeduction) {
+            throw new IllegalArgumentException("Insufficient funds to cover transfer and service fee ($" + fee + ")!");
+        }
+
+        // Check if accounts are ACTIVE
+        if (!"ACTIVE".equalsIgnoreCase(sourceAccount.getStatus())) {
+            throw new IllegalStateException("Transaction Failed! Source account " + sourceAccount.getAccountNumber() + " is FROZEN.");
+        }
+        if (!"ACTIVE".equalsIgnoreCase(destinationAccount.getStatus())) {
+            throw new IllegalStateException("Transaction Failed! Destination account " + destinationAccount.getAccountNumber() + " is FROZEN.");
         }
 
         try (Connection conn = DatabaseConfig.getConnection()) {
@@ -48,26 +61,29 @@ public class TransferCommand implements Command {
                     throw new SQLException("Account not found during transaction!");
                 }
 
-                // 2. Re-check balance using the locked (fresh) data
-                if (lockedSource.getBalance() < amount) {
-                    throw new IllegalArgumentException("Insufficient funds in source account!");
+                // 2. Re-check balance including fee using the locked (fresh) data
+                if (lockedSource.getBalance() < totalDeduction) {
+                    throw new IllegalArgumentException("Insufficient funds to cover transfer and service fee!");
                 }
 
-                // 3. Update source balance
-                lockedSource.updateBalance(-amount);
+                // 3. Update source balance (Deduct amount + fee)
+                lockedSource.updateBalance(-totalDeduction);
                 accountDAO.updateAccountBalance(conn, lockedSource);
 
-                // 4. Update destination balance
+                // 4. Update destination balance (Add only amount)
                 lockedDest.updateBalance(amount);
                 accountDAO.updateAccountBalance(conn, lockedDest);
 
                 // 5. Log transactions
                 Transaction outTx = new Transaction(sourceAccount.getAccountNumber(), "TRANSFER_OUT", amount,
                         LocalDateTime.now());
+                Transaction feeTx = new Transaction(sourceAccount.getAccountNumber(), "SERVICE_FEE", fee,
+                        LocalDateTime.now());
                 Transaction inTx = new Transaction(destinationAccount.getAccountNumber(), "TRANSFER_IN", amount,
                         LocalDateTime.now());
 
                 transactionDAO.saveTransaction(conn, outTx);
+                transactionDAO.saveTransaction(conn, feeTx);
                 transactionDAO.saveTransaction(conn, inTx);
 
                 // 6. Save command to history for persistent undo
@@ -80,9 +96,10 @@ public class TransferCommand implements Command {
                 conn.commit();
                 System.out.println(
                         "Successfully transferred $" + amount + " to account " + destinationAccount.getAccountNumber());
+                System.out.println("Service fee of $" + fee + " was applied.");
             } catch (SQLException ex) {
                 conn.rollback();
-                sourceAccount.updateBalance(amount);
+                sourceAccount.updateBalance(totalDeduction);
                 destinationAccount.updateBalance(-amount);
                 System.out.println("Transfer Failed! Rolling back database changes.");
                 ex.printStackTrace();

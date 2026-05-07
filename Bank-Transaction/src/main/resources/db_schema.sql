@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS accounts (
     account_number VARCHAR(20) PRIMARY KEY,
     account_holder VARCHAR(100) NOT NULL,
     pin_code VARCHAR(255) NOT NULL DEFAULT '1234',
-    balance DECIMAL(15, 2) NOT NULL DEFAULT 0.00
+    balance DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' -- 'ACTIVE' or 'FROZEN'
 );
 
 -- Table for storing Transactions History

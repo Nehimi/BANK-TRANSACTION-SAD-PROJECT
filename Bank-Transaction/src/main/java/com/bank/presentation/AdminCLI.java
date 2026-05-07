@@ -24,7 +24,7 @@ public class AdminCLI {
 
         System.out.print("Enter Admin Username (or 'exit' to quit): ");
         String username = scanner.nextLine().trim();
-        
+
         if (username.equalsIgnoreCase("exit"))
             return;
 
@@ -44,8 +44,9 @@ public class AdminCLI {
             System.out.println("1. Create a New Bank Account");
             System.out.println("2. Undo Last Transaction (By Account)");
             System.out.println("3. View All System Transactions");
-            System.out.println("4. Logout (Go Back)");
-            System.out.print("> Choose an option (1-4): ");
+            System.out.println("4. Manage Account Status (Freeze/Unfreeze)");
+            System.out.println("5. Logout (Go Back)");
+            System.out.print("> Choose an option (1-5): ");
 
             String choice = scanner.nextLine().trim();
 
@@ -61,7 +62,7 @@ public class AdminCLI {
 
                     try {
                         double initialDeposit = Double.parseDouble(scanner.nextLine().trim());
-                        BankAccount newAccount = new BankAccount(accNo, holder, pin, initialDeposit);
+                        BankAccount newAccount = new BankAccount(accNo, holder, pin, initialDeposit, "ACTIVE");
                         bankService.createAccount(newAccount);
                         System.out.println("[OK] Account Created Successfully for " + holder + "!");
                     } catch (NumberFormatException e) {
@@ -87,15 +88,29 @@ public class AdminCLI {
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                         for (Transaction t : allHistory) {
                             System.out.printf("[%s] ACC: %-15s | %-12s : $%.2f\n",
-                                    t.getTimestamp().format(formatter), 
-                                    t.getAccountNumber(), 
-                                    t.getType(), 
+                                    t.getTimestamp().format(formatter),
+                                    t.getAccountNumber(),
+                                    t.getType(),
                                     t.getAmount());
                         }
                     }
                     break;
 
                 case "4":
+                    System.out.print("Enter Account Number to change status: ");
+                    String statusAccNo = scanner.nextLine().trim();
+                    System.out.print("Enter New Status (ACTIVE/FROZEN): ");
+                    String newStatus = scanner.nextLine().trim().toUpperCase();
+
+                    try {
+                        bankService.updateAccountStatus(statusAccNo, newStatus);
+                        System.out.println("[OK] Account " + statusAccNo + " is now " + newStatus + ".");
+                    } catch (Exception e) {
+                        System.out.println("[X] Failed to update status: " + e.getMessage());
+                    }
+                    break;
+
+                case "5":
                     System.out.println("Logging out of Admin Terminal...");
                     active = false;
                     break;

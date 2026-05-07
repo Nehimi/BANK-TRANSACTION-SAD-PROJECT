@@ -31,8 +31,19 @@ public class WithdrawCommand implements Command {
         if (amount <= 0) {
             throw new IllegalArgumentException("Withdrawal amount must be greater than zero.");
         }
-        if (account.getBalance() < amount) {
-            throw new IllegalArgumentException("Insufficient funds! Your balance is $" + account.getBalance());
+
+        // Calculate fee: 5 units if amount > 5000
+        double fee = (amount > 5000) ? 5.0 : 0.0;
+        double totalDeduction = amount + fee;
+
+        if (account.getBalance() < totalDeduction) {
+            throw new IllegalArgumentException("Insufficient funds! Your balance is $" + account.getBalance()
+                    + (fee > 0 ? ". Amount with fee: $" + totalDeduction : ""));
+        }
+
+        // Check if account is ACTIVE
+        if (!"ACTIVE".equalsIgnoreCase(account.getStatus())) {
+            throw new IllegalStateException("Transaction Failed! Account " + account.getAccountNumber() + " is FROZEN.");
         }
 
         try (Connection conn = DatabaseConfig.getConnection()) {
@@ -46,32 +57,43 @@ public class WithdrawCommand implements Command {
                 }
 
                 // 2. Re-check balance using the locked (fresh) data
-                if (lockedAccount.getBalance() < amount) {
-                    throw new IllegalArgumentException("Insufficient funds! Your balance is $" + lockedAccount.getBalance());
+                if (lockedAccount.getBalance() < totalDeduction) {
+                    throw new IllegalArgumentException(
+                            "Insufficient funds! Your balance is $" + lockedAccount.getBalance());
                 }
 
                 // 3. Update the balance
-                lockedAccount.updateBalance(-amount);
+                lockedAccount.updateBalance(-totalDeduction);
 
                 // 4. Save the updated balance to MySQL
                 accountDAO.updateAccountBalance(conn, lockedAccount);
 
-                // 5. Log the transaction in MySQL
+                // 5. Log the transactions in MySQL
                 Transaction tx = new Transaction(account.getAccountNumber(), "WITHDRAW", amount, LocalDateTime.now());
                 transactionDAO.saveTransaction(conn, tx);
 
+                if (fee > 0) {
+                    Transaction feeTx = new Transaction(account.getAccountNumber(), "SERVICE_FEE", fee,
+                            LocalDateTime.now());
+                    transactionDAO.saveTransaction(conn, feeTx);
+                }
+
                 // 6. Save command to history for persistent undo
-                commandHistoryDAO.saveCommand(conn, account.getAccountNumber(), "WITHDRAW", amount, null, LocalDateTime.now());
+                commandHistoryDAO.saveCommand(conn, account.getAccountNumber(), "WITHDRAW", amount, null,
+                        LocalDateTime.now());
 
                 // 7. Sync the in-memory object
                 account.setBalance(lockedAccount.getBalance());
 
                 conn.commit();
                 System.out.println("Successfully withdrew $" + amount + " from account " + account.getAccountNumber());
+                if (fee > 0) {
+                    System.out.println("A service fee of $" + fee + " was applied for large withdrawal.");
+                }
 
             } catch (SQLException ex) {
                 conn.rollback();
-                account.updateBalance(amount);
+                account.updateBalance(totalDeduction);
                 System.out.println("Transaction Failed! Rolling back database changes.");
                 ex.printStackTrace();
             }
