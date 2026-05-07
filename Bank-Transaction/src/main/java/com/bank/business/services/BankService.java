@@ -161,4 +161,17 @@ public class BankService {
         }
         accountDAO.updatePin(accountNumber, newPin);
     }
+
+    public void updateAccountStatus(String accountNumber, String newStatus) throws java.sql.SQLException {
+        BankAccount account = accountDAO.getAccount(accountNumber);
+        if (account == null) {
+            throw new IllegalArgumentException("Account not found!");
+        }
+
+        if (!newStatus.equalsIgnoreCase("ACTIVE") && !newStatus.equalsIgnoreCase("FROZEN")) {
+            throw new IllegalArgumentException("Invalid status! Use 'ACTIVE' or 'FROZEN'.");
+        }
+
+        accountDAO.updateAccountStatus(accountNumber, newStatus.toUpperCase());
+    }
 }

@@ -32,6 +32,11 @@ public class DepositCommand implements Command {
             throw new IllegalArgumentException("Deposit amount must be greater than zero.");
         }
 
+        // Check if account is ACTIVE
+        if (!"ACTIVE".equalsIgnoreCase(account.getStatus())) {
+            throw new IllegalStateException("Transaction Failed! Account " + account.getAccountNumber() + " is FROZEN.");
+        }
+
         try (Connection conn = DatabaseConfig.getConnection()) {
             conn.setAutoCommit(false);
 
