@@ -1,6 +1,7 @@
 // EthioBank Frontend Integration Script
 let currentUser = null;
-const API_BASE = "/api"; 
+let isBalanceHidden = true;
+const API_BASE = "/api";
 
 // UI Elements
 const loginSection = document.getElementById('login-section');
@@ -40,13 +41,18 @@ async function login(role) {
         if (response.ok) {
             // Authentication successful
             await fetchAccountDetails(accNo);
-            
+
             // Switch Views with a slight delay for smooth transition
             setTimeout(() => {
                 loginSection.style.display = 'none';
                 dashboardSection.style.display = 'block';
                 userInfo.style.display = 'flex';
                 document.querySelector('.user-role-badge').innerText = role.charAt(0).toUpperCase() + role.slice(1);
+                
+                // Save session for refresh persistence
+                localStorage.setItem('ethiobank_accNo', accNo);
+                localStorage.setItem('ethiobank_role', role);
+                
                 setLoading(false);
             }, 500);
         } else {
@@ -78,15 +84,32 @@ async function fetchAccountDetails(accNo) {
 }
 
 // 3. Update Dashboard UI
+function toggleBalance() {
+    isBalanceHidden = !isBalanceHidden;
+    const eyeIcon = document.getElementById('balance-eye');
+    
+    if (isBalanceHidden) {
+        eyeIcon.className = 'fa-solid fa-eye';
+    } else {
+        eyeIcon.className = 'fa-solid fa-eye-slash';
+    }
+    
+    updateDashboardUI();
+}
+
 function updateDashboardUI() {
     if (!currentUser) return;
-    
-    // Animate balance update
-    animateValue(displayBalance, parseFloat(displayBalance.innerText.replace(/,/g, '')), currentUser.balance, 1000);
-    
+
+    if (isBalanceHidden) {
+        displayBalance.innerText = "****.**";
+    } else {
+        // Animate balance update
+        animateValue(displayBalance, parseFloat(displayBalance.innerText.replace(/,/g, '').replace(/ETB /g, '')) || 0, currentUser.balance, 1000);
+    }
+
     displayStatus.innerText = currentUser.status;
     displayStatus.className = `status-indicator status-${currentUser.status.toLowerCase()}`;
-    
+
     // Show last 4 digits of account number
     const accStr = currentUser.accountNumber.toString();
     lastFourDigits.innerText = accStr.slice(-4);
@@ -121,10 +144,10 @@ function renderTransactions(transactions, limit = 4) {
         const isIncome = tx.type.includes('DEPOSIT') || tx.type.includes('IN');
         const row = document.createElement('tr');
         row.className = 'animate-fade';
-        
+
         let txDate;
         if (Array.isArray(tx.timestamp)) {
-            txDate = new Date(tx.timestamp[0], tx.timestamp[1]-1, tx.timestamp[2], tx.timestamp[3], tx.timestamp[4], tx.timestamp[5]);
+            txDate = new Date(tx.timestamp[0], tx.timestamp[1] - 1, tx.timestamp[2], tx.timestamp[3], tx.timestamp[4], tx.timestamp[5]);
         } else if (typeof tx.timestamp === 'string') {
             txDate = new Date(tx.timestamp);
         } else {
@@ -148,7 +171,7 @@ function renderTransactions(transactions, limit = 4) {
             </td>
             <td>
                 <div style="font-size: 0.9rem;">${txDate.toLocaleDateString()}</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">${txDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">${txDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
             </td>
         `;
         transactionTableBody.appendChild(row);
@@ -168,9 +191,10 @@ const modalConfirmBtn = document.getElementById('modal-confirm-btn');
 function showAllTransactions() {
     if (!fullTransactionHistory || fullTransactionHistory.length === 0) return;
 
+    location.hash = 'history';
     modalOverlay.style.display = 'flex';
     modalTitle.innerText = "Full Transaction History";
-    
+
     modalBody.innerHTML = `
         <div class="table-container" style="max-height: 400px; overflow-y: auto;">
             <table style="width: 100%; border-collapse: collapse;">
@@ -184,7 +208,7 @@ function showAllTransactions() {
         const isIncome = tx.type.includes('DEPOSIT') || tx.type.includes('IN');
         let txDate;
         if (Array.isArray(tx.timestamp)) {
-            txDate = new Date(tx.timestamp[0], tx.timestamp[1]-1, tx.timestamp[2], tx.timestamp[3], tx.timestamp[4], tx.timestamp[5]);
+            txDate = new Date(tx.timestamp[0], tx.timestamp[1] - 1, tx.timestamp[2], tx.timestamp[3], tx.timestamp[4], tx.timestamp[5]);
         } else if (typeof tx.timestamp === 'string') {
             txDate = new Date(tx.timestamp);
         } else {
@@ -195,7 +219,7 @@ function showAllTransactions() {
         row.innerHTML = `
             <td style="padding: 1rem; border-bottom: 1px solid var(--glass-border);">
                 <div style="font-weight: 600;">${formatType(tx.type)}</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">${txDate.toLocaleDateString()} ${txDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">${txDate.toLocaleDateString()} ${txDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
             </td>
             <td style="padding: 1rem; border-bottom: 1px solid var(--glass-border); text-align: right; font-weight: 700; color: ${isIncome ? 'var(--success)' : 'var(--text-primary)'}">
                 ${isIncome ? '+' : '-'}ETB ${tx.amount.toFixed(2)}
@@ -204,10 +228,11 @@ function showAllTransactions() {
         fullBody.appendChild(row);
     });
 
-    modalConfirmBtn.style.display = 'none'; 
+    modalConfirmBtn.style.display = 'none';
 }
 
 function openModal(action) {
+    location.hash = action;
     modalOverlay.style.display = 'flex';
     modalTitle.innerText = action.charAt(0).toUpperCase() + action.slice(1);
     modalConfirmBtn.style.display = 'inline-flex';
@@ -224,7 +249,7 @@ function openModal(action) {
             <div class="input-group">
                 <label>Amount to Transfer</label>
                 <div class="input-wrapper">
-                    <i class="fa-solid fa-money-bill-wave"></i>
+                    <span class="currency-prefix">ETB</span>
                     <input type="number" id="modal-amount" placeholder="0.00">
                 </div>
             </div>
@@ -233,12 +258,29 @@ function openModal(action) {
                 <p style="font-size: 0.8rem; color: #ffcc00; margin: 0;">A 1% service fee will be applied to this transfer.</p>
             </div>
         `;
+    } else if (action === 'change-pin') {
+        modalBody.innerHTML = `
+            <div class="input-group">
+                <label>Current PIN</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="modal-old-pin" placeholder="****" maxlength="4">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>New PIN</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="modal-new-pin" placeholder="****" maxlength="4">
+                </div>
+            </div>
+        `;
     } else {
         modalBody.innerHTML = `
             <div class="input-group">
                 <label>Amount to ${action}</label>
                 <div class="input-wrapper">
-                    <i class="fa-solid fa-money-bill-wave"></i>
+                    <span class="currency-prefix">ETB</span>
                     <input type="number" id="modal-amount" placeholder="0.00">
                 </div>
             </div>
@@ -249,15 +291,16 @@ function openModal(action) {
 }
 
 function closeModal() {
+    location.hash = ''; // Clear the hash
     modalOverlay.style.display = 'none';
 }
 
 // 7. Process Actions
 async function processAction(action) {
     const amountInput = document.getElementById('modal-amount');
-    const amount = parseFloat(amountInput.value);
+    const amount = amountInput ? parseFloat(amountInput.value) : 0;
 
-    if (isNaN(amount) || amount <= 0) {
+    if (action !== 'change-pin' && (isNaN(amount) || amount <= 0)) {
         showFeedback("Please enter a valid amount.", "error");
         return;
     }
@@ -277,6 +320,16 @@ async function processAction(action) {
             return;
         }
         payload = { fromAccount: currentUser.accountNumber, toAccount: targetAcc, amount: amount };
+    } else if (action === 'change-pin') {
+        const oldPin = document.getElementById('modal-old-pin').value;
+        const newPin = document.getElementById('modal-new-pin').value;
+        if (!oldPin || !newPin) {
+            showFeedback("Please enter both current and new PIN.", "error");
+            modalConfirmBtn.disabled = false;
+            modalConfirmBtn.innerText = "Confirm Action";
+            return;
+        }
+        payload = { accountNumber: currentUser.accountNumber, oldPin: oldPin, newPin: newPin };
     }
 
     try {
@@ -316,7 +369,7 @@ function processQuickAction(action) {
     // Reuse processAction logic without opening modal
     const originalBody = modalBody.innerHTML; // Store
     modalBody.innerHTML = `<input type="number" id="modal-amount" value="${amount}">`;
-    
+
     processAction(action).then(() => {
         amountInput.value = '';
     });
@@ -356,10 +409,44 @@ function animateValue(obj, start, end, duration) {
 // 9. Logout
 function logout() {
     currentUser = null;
+    localStorage.removeItem('ethiobank_accNo');
+    localStorage.removeItem('ethiobank_role');
+    
     dashboardSection.style.display = 'none';
     userInfo.style.display = 'none';
     loginSection.style.display = 'flex';
     document.getElementById('login-account').value = '';
     document.getElementById('login-pin').value = '';
+    location.hash = ''; // Clear hash on logout
 }
 
+// 10. Routing
+window.addEventListener('hashchange', () => {
+    if (!currentUser) return; // Only route if logged in
+
+    const action = location.hash.replace('#', '');
+    if (!action) {
+        modalOverlay.style.display = 'none';
+        return;
+    }
+
+    if (action === 'history') {
+        showAllTransactions();
+    } else if (['deposit', 'withdraw', 'transfer', 'change-pin'].includes(action)) {
+        openModal(action);
+    }
+});
+
+// Initial session check
+window.addEventListener('load', async () => {
+    const savedAcc = localStorage.getItem('ethiobank_accNo');
+    const savedRole = localStorage.getItem('ethiobank_role');
+    
+    if (savedAcc && savedRole) {
+        await fetchAccountDetails(savedAcc);
+        loginSection.style.display = 'none';
+        dashboardSection.style.display = 'block';
+        userInfo.style.display = 'flex';
+        document.querySelector('.user-role-badge').innerText = savedRole.charAt(0).toUpperCase() + savedRole.slice(1);
+    }
+});

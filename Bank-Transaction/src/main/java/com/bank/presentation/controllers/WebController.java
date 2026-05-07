@@ -31,6 +31,9 @@ public class WebController {
                 staticFiles.directory = finalPath;
                 staticFiles.location = Location.EXTERNAL;
             });
+            // Fix for trailing slash issues in some browsers
+            config.routing.ignoreTrailingSlashes = true;
+
             // Handle LocalDateTime serialization
             com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
             objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
@@ -50,6 +53,16 @@ public class WebController {
         app.post("/api/deposit", this::handleDeposit);
         app.post("/api/withdraw", this::handleWithdraw);
         app.post("/api/transfer", this::handleTransfer);
+        app.post("/api/change-pin", this::handleChangePin);
+
+        // 4. Admin Operations
+        app.get("/api/admin/accounts", this::handleAdminGetAllAccounts);
+        app.get("/api/admin/transactions", this::handleAdminGetAllTransactions);
+        app.post("/api/admin/create-account", this::handleAdminCreateAccount);
+        app.post("/api/admin/update-status", this::handleAdminUpdateStatus);
+        app.post("/api/admin/undo", this::handleAdminUndo);
+        app.post("/api/admin/reset-pin", this::handleAdminResetPin);
+        app.delete("/api/admin/delete-account/{accountNumber}", this::handleAdminDeleteAccount);
 
         System.out.println("[Web Server] Started on http://localhost:" + port);
     }
@@ -131,6 +144,87 @@ public class WebController {
         try {
             bankService.processTransfer(from, to, amount);
             ctx.json(Map.of("status", "success", "message", "Transfer successful"));
+        } catch (Exception e) {
+            ctx.status(400).json(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
+
+    private void handleChangePin(Context ctx) {
+        Map<String, String> body = ctx.bodyAsClass(Map.class);
+        String accNo = body.get("accountNumber");
+        String oldPin = body.get("oldPin");
+        String newPin = body.get("newPin");
+
+        try {
+            bankService.changePin(accNo, oldPin, newPin);
+            ctx.json(Map.of("status", "success", "message", "PIN updated successfully"));
+        } catch (Exception e) {
+            ctx.status(400).json(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
+
+    private void handleAdminGetAllAccounts(Context ctx) {
+        ctx.json(bankService.getAllAccounts());
+    }
+
+    private void handleAdminGetAllTransactions(Context ctx) {
+        ctx.json(bankService.getAllSystemTransactions());
+    }
+
+    private void handleAdminCreateAccount(Context ctx) {
+        BankAccount account = ctx.bodyAsClass(BankAccount.class);
+        try {
+            bankService.createAccount(account);
+            ctx.status(201).json(Map.of("status", "success", "message", "Account created successfully"));
+        } catch (Exception e) {
+            ctx.status(400).json(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
+
+    private void handleAdminUpdateStatus(Context ctx) {
+        Map<String, String> body = ctx.bodyAsClass(Map.class);
+        String accNo = body.get("accountNumber");
+        String status = body.get("status");
+
+        try {
+            bankService.updateAccountStatus(accNo, status);
+            ctx.json(Map.of("status", "success", "message", "Account status updated to " + status));
+        } catch (Exception e) {
+            ctx.status(400).json(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
+
+    private void handleAdminUndo(Context ctx) {
+        Map<String, String> body = ctx.bodyAsClass(Map.class);
+        String accNo = body.get("accountNumber");
+
+        try {
+            bankService.undoLastTransaction(accNo);
+            ctx.json(Map.of("status", "success", "message", "Last transaction undone successfully"));
+        } catch (Exception e) {
+            ctx.status(400).json(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
+
+    private void handleAdminResetPin(Context ctx) {
+        Map<String, String> body = ctx.bodyAsClass(Map.class);
+        String accNo = body.get("accountNumber");
+        String newPin = body.get("newPin");
+
+        try {
+            // Reusing accountDAO via bankService if available, or just update directly
+            bankService.adminResetPin(accNo, newPin);
+            ctx.json(Map.of("status", "success", "message", "Customer PIN has been reset successfully"));
+        } catch (Exception e) {
+            ctx.status(400).json(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
+
+    private void handleAdminDeleteAccount(Context ctx) {
+        String accNo = ctx.pathParam("accountNumber");
+        try {
+            bankService.deleteAccount(accNo);
+            ctx.json(Map.of("status", "success", "message", "Account deleted successfully"));
         } catch (Exception e) {
             ctx.status(400).json(Map.of("status", "error", "message", e.getMessage()));
         }
