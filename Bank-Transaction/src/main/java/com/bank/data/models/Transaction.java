@@ -9,6 +9,8 @@ public class Transaction {
     private double amount;
     private LocalDateTime timestamp;
 
+    public Transaction() {}
+
     // Full constructor (when reading from Database)
     public Transaction(int transactionId, String accountNumber, String type, double amount, LocalDateTime timestamp) {
         this.transactionId = transactionId;

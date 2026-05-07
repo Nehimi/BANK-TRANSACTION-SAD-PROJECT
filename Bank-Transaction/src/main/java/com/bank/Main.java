@@ -15,6 +15,13 @@ public class Main {
         System.out.println("WELCOME TO THE BANKING SYSTEM LAUNCHER");
         System.out.println("=========================================");
 
+        // Start Web Server in background thread
+        new Thread(() -> {
+            com.bank.presentation.controllers.WebController webController = new com.bank.presentation.controllers.WebController(
+                    bankService);
+            webController.start(8081);
+        }).start();
+
         while (true) {
             System.out.println("\nSelect Login Type:");
             System.out.println("1. Customer Login");
