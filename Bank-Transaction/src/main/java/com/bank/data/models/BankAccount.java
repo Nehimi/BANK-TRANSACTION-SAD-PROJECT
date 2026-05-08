@@ -5,7 +5,7 @@ public class BankAccount {
     private String accountHolder;
     private String pinCode;
     private double balance;
-    private String status; // "ACTIVE" or "FROZEN"
+    private String status;
 
     public BankAccount(String accountNumber, String accountHolder, String pinCode, double balance, String status) {
         this.accountNumber = accountNumber;
@@ -15,9 +15,9 @@ public class BankAccount {
         this.status = status;
     }
 
-    public BankAccount() {}
+    public BankAccount() {
+    }
 
-    // Getters
     public String getAccountNumber() {
         return accountNumber;
     }
@@ -54,7 +54,6 @@ public class BankAccount {
         this.status = status;
     }
 
-    // Used by commands to update balance (supports positive or negative amounts)
     public void updateBalance(double amount) {
         this.balance += amount;
     }

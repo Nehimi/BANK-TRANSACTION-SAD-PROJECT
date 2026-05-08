@@ -1,53 +1,57 @@
-# 🏦 Banking Transaction System (Java & MySQL Architecture)
+# 🏦 Banking Transaction System
+> **Software Architecture & Design (SAD) Project**
 
-## 📌 Title
-Banking Transaction System Using Command and Singleton Patterns with Java and MySQL Integration
-
----
-
-## 🎯 Project Objective
-Develop a professional, robust banking system adapted for **Java and MySQL** while strictly adhering to academic software architecture principles. The system performs deposit and withdrawal operations, maintains a reliable transaction history, and strictly implements the **Command Pattern** and **Singleton Pattern** within a clean **3-Tier Architecture**.
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue.svg)](https://www.mysql.com/)
+[![Architecture](https://img.shields.io/badge/Architecture-3--Tier-green.svg)](#-architecture-3-tier-java-adaptation)
+[![Patterns](https://img.shields.io/badge/Patterns-Command%20%26%20Singleton-red.svg)](#-core-design-patterns)
 
 ---
 
-## 🏗 Architecture (3-Tier Java Adaptation)
+## 📌 Project Overview
+This project is a professional, robust banking system developed with a strict focus on **Software Architecture Principles**. It handles complex financial operations like deposits, withdrawals, and inter-account transfers while maintaining a reliable audit trail in a MySQL database.
 
-This system maintains strict separation of concerns through a standard 3-tier desktop architecture:
+The system is built using a **3-Tier Architecture** and implements the **Command** and **Singleton** design patterns to ensure scalability, thread safety, and loose coupling.
 
-### 1. Presentation Layer (JavaFX)
-* **Responsibility:** Handles user interaction and UI rendering.
-* **Components:** Lightweight JavaFX controllers and FXML views for capturing user inputs (Amounts) and triggering operations (Deposit/Withdraw buttons).
-* **Rule:** Contains *zero* business logic; strictly communicates with the backend services.
+---
 
-### 2. Business Logic Layer (Java Core)
-* **Responsibility:** Houses all system rules and design patterns.
-* **Patterns Used:**
-  * **Command Pattern:** Encapsulates transaction requests as objects.
-  * **Singleton Pattern:** Manages central transaction processing.
-* **Components:** Services, Command implementations, and the `TransactionManager`.
+## 🏗 Architecture (3-Tier Implementation)
+The system maintains a strict separation of concerns to ensure that modifications in one layer do not break others.
 
-### 3. Data Layer (MySQL & JDBC)
-* **Responsibility:** Data persistence and schema validation.
-* **Components:** DAO (Data Access Object) classes and Entity Models (`BankAccount`, `Transaction`).
-* **Rule:** Completely isolated from the UI. Accessed only by the Business Logic Layer.
+### 1️⃣ Presentation Layer (Multi-Client Interface)
+*   **Web Interface:** Modern HTML5/JavaScript frontend for Customers and Admins.
+*   **CLI Interface:** Admin and Client command-line tools for direct system interaction.
+*   **Responsibility:** Captures user inputs and displays transaction results. It contains **zero** business logic.
+
+### 2️⃣ Business Logic Layer (The Core)
+*   **Services:** `BankService.java` acts as the primary API for the presentation layer.
+*   **Design Patterns:**
+    *   **Command Pattern:** Every transaction (Deposit, Withdraw, Transfer) is an object.
+    *   **Singleton Pattern:** `TransactionManager` ensures central, thread-safe execution.
+*   **Responsibility:** Enforces banking rules, calculates fees, and manages the execution pipeline.
+
+### 3️⃣ Data Access Layer (Persistence)
+*   **Technologies:** MySQL & JDBC.
+*   **Components:** DAO classes (`BankAccountDAO`, `TransactionDAO`, `AdminDAO`).
+*   **Responsibility:** Handles all database communications, ensuring data integrity and persistence.
 
 ---
 
 ## 🧩 Core Design Patterns
 
-### 🔹 Command Pattern (Behavioral Pattern)
-Instead of executing banking operations directly, requests are encapsulated as command objects.
-* **Command Interface:** Defines a standard `execute()` method.
-* **Concrete Commands:** `DepositCommand` and `WithdrawCommand`.
-* **Benefits:** 
-  * Achieves loose coupling between the UI controller and the bank account logic.
-  * Allows us to easily store a history of executed commands for the transaction log.
-  * Makes it easy to implement future features like "Undo" if necessary.
+### 🔹 Command Pattern (Behavioral)
+Banking operations are encapsulated as objects, allowing for request parameterization and history logging.
+*   **Concrete Commands:** `DepositCommand`, `WithdrawCommand`, `TransferCommand`.
+*   **Benefits:** 
+    *   **Loose Coupling:** The UI doesn't need to know how a transfer works internally.
+    *   **Audit Trail:** Every command is saved to the `command_history` table for a 100% accurate log.
+    *   **Reversibility:** Simplifies the implementation of "Undo" operations.
 
-### 🔹 Singleton Pattern (Creational Pattern)
-Ensures that the core banking processing engine has only one active instance across the entire application lifecycle.
-* **Implementation:** `TransactionManager` (or `BankSystem`) class.
-* **Benefits:** Prevents race conditions, centralizes the command execution pipeline, and ensures the transaction history array remains consistent in memory while being synchronized to the database.
+### 🔹 Singleton Pattern (Creational)
+Ensures the core execution engine (`TransactionManager`) has exactly one instance.
+*   **Benefits:** 
+    *   **Thread Safety:** Centralizes all balance updates to prevent race conditions.
+    *   **Consistency:** Guarantees that the transaction history remains synchronized across the entire app.
 
 ---
 
@@ -55,92 +59,62 @@ Ensures that the core banking processing engine has only one active instance acr
 
 ```mermaid
 sequenceDiagram
-    participant UI as JavaFX UI
+    participant UI as Presentation (Web/CLI)
     participant Service as BankService
     participant Invoker as TransactionManager (Singleton)
-    participant Command as Deposit/Withdraw Command
+    participant Command as ConcreteCommand (Deposit/Transfer)
     participant Receiver as BankAccount Model
     participant DAO as MySQL DAO
     participant DB as MySQL Database
 
-    UI->>Service: processDeposit(amount)
-    Service->>Command: Creates DepositCommand(amount)
-    Service->>Invoker: Invoker.executeCommand(Command)
+    UI->>Service: processRequest(data)
+    Service->>Command: Instantiate(data)
+    Service->>Invoker: executeCommand(Command)
     Invoker->>Command: execute()
-    Command->>Receiver: updateBalance(+amount)
-    Receiver->>DAO: saveTransaction()
-    DAO->>DB: Execute SQL INSERT/UPDATE
-    DB-->>DAO: Success
-    DAO-->>Receiver: Success
-    Receiver-->>Command: Success
-    Command-->>Invoker: Success
-    Invoker-->>Service: New Balance
-    Service-->>UI: Update UI state
+    Command->>Receiver: updateBalance()
+    Receiver->>DAO: persist()
+    DAO->>DB: SQL INSERT/UPDATE
+    DB-->>UI: Return Result/Status
 ```
 
 ---
 
-## 🗂 Proposed Directory Structure
-
+## 🗂 Project Structure (Actual)
 ```text
 /Bank-Transaction
-│
-├── /src
-│   ├── /presentation           # Presentation Layer (JavaFX)
-│   │   ├── /controllers        # UI Controllers
-│   │   ├── /views              # FXML Files
-│   │   └── MainApp.java        # Entry Point
-│   │
-│   ├── /business               # Business Logic Layer
-│   │   ├── /commands           # Command Pattern implementations
-│   │   │   ├── Command.java
-│   │   │   ├── DepositCommand.java
-│   │   │   └── WithdrawCommand.java
-│   │   │
-│   │   ├── /core               # Singleton implementations
-│   │   │   └── TransactionManager.java
-│   │   │
-│   │   └── /services           # Service Interfaces
-│   │
-│   ├── /data                   # Data Layer
-│   │   ├── /dao                # Data Access Objects (JDBC)
-│   │   ├── /models             # Entity Classes (BankAccount, Transaction)
-│   │   └── DatabaseConfig.java # MySQL Connection Details
-│   │
-│   └── /resources
-│       └── db_schema.sql       # MySQL Database Setup Script
-│
-├── pom.xml                     # Maven Configuration (or build.gradle)
-└── README.md
+├── frontend/                   # Web-based Presentation Layer
+│   ├── pages/                  # Admin & Customer HTML pages
+│   ├── css/                    # Modern styling
+│   └── js/                     # Frontend logic & API calls
+├── src/main/java/com/bank/
+│   ├── business/               # Business Logic Layer
+│   │   ├── commands/           # Command Pattern: Deposit, Withdraw, Transfer
+│   │   ├── core/               # Singleton: TransactionManager
+│   │   └── services/           # Service API: BankService
+│   ├── data/                   # Data Access Layer
+│   │   ├── dao/                # DAOs: Admin, BankAccount, Transaction
+│   │   ├── models/             # Entities: BankAccount, Transaction
+│   │   └── DatabaseConfig.java # JDBC Connection Management
+│   └── presentation/           # Presentation Layer (Back-end)
+│       ├── controllers/        # WebController (Jetty Bridge)
+│       └── CLI/                # AdminCLI, ClientCLI
+└── pom.xml                     # Maven Dependencies
 ```
 
 ---
 
-## 🗣 Presentation Summary (Pitch)
-
-> *"This project demonstrates a rigorous application of software architecture principles. By adapting the system to Java and MySQL, we utilize JavaFX for a clean Presentation Layer, while strictly enforcing the Command and Singleton design patterns in our Business Logic Layer. MySQL acts as our Data Layer, fully abstracted through DAOs via JDBC. This ensures a highly cohesive, loosely coupled system capable of reliably processing and logging financial transactions."*
+## 🗣 Presentation Pitch
+> *"This project demonstrates a rigorous application of software architecture. By utilizing a 3-Tier model, we isolate user interaction from data persistence. The Command Pattern allows us to treat financial actions as trackable objects, while the Singleton Pattern ensures our transaction engine is safe and centralized. This is not just a banking app; it is a demonstration of maintainable and scalable software design."*
 
 ---
 
-## 🚀 Development Roadmap (Implementation Phases)
+## 🚀 Development Roadmap
+- [x] **Phase 1:** Core Models & Database Schema setup.
+- [x] **Phase 2:** JDBC & DAO Implementation for MySQL.
+- [x] **Phase 3:** Command & Singleton Pattern integration.
+- [x] **Phase 4:** Web Controller & Frontend Development.
+- [x] **Phase 5:** Multi-role (Admin/Customer) support and Fee logic.
+- [ ] **Phase 6:** Advanced Security & Unit Testing.
 
-### Phase 1: Project Setup & Core Models (Entity Layer)
-* **Maven Setup:** Configure `pom.xml` with dependencies for MySQL Connector/J and JavaFX.
-* **Models:** Create Entity classes (`BankAccount`, `Transaction`) that mirror the database tables.
-
-### Phase 2: Data Access Layer (MySQL & JDBC)
-* **DatabaseConfig:** Create utility class for managing MySQL database connections.
-* **DAOs:** Implement `BankAccountDAO` and `TransactionDAO` for CRUD operations and persisting transaction history.
-
-### Phase 3: Business Logic Layer (Command & Singleton Patterns)
-* **Command Pattern:** Implement `Command` interface, alongside `DepositCommand` and `WithdrawCommand`.
-* **Singleton Pattern:** Build `TransactionManager` to centrally process and log executed commands.
-* **Service:** Create a `BankService` to act as an intermediary between the UI and the business logic.
-
-### Phase 4: Presentation Layer (JavaFX)
-* **Views:** Build JavaFX FXML interfaces (e.g., `MainView.fxml`) for account overview and transaction inputs.
-* **Controllers:** Implement UI controllers that strictly invoke `BankService` methods without containing direct business logic.
-
-### Phase 5: Integration & Testing
-* **End-to-End Flow:** Connect JavaFX UI -> BankService -> TransactionManager -> MySQL.
-* **Testing:** Validate deposits, withdrawals, and accurate logging of transaction history in the database.
+---
+*Created for the SAD Project Presentation - 2026*

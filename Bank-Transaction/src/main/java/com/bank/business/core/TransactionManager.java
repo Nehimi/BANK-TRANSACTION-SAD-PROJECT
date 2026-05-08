@@ -40,7 +40,6 @@ public class TransactionManager {
         return instance;
     }
 
-    // Method to execute commands centrally
     public void executeCommand(Command command) {
         command.execute();
         String accNo = command.getAccountNumber();

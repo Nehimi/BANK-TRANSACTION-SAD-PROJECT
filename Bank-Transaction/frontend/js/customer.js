@@ -1,7 +1,7 @@
 // EthioBank Frontend Integration Script
 let currentUser = null;
 let isBalanceHidden = true;
-const API_BASE = "/api";
+const API_BASE = "http://localhost:8081/api";
 
 // UI Elements
 const loginSection = document.getElementById('login-section');

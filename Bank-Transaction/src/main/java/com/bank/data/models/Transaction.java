@@ -5,13 +5,13 @@ import java.time.LocalDateTime;
 public class Transaction {
     private int transactionId;
     private String accountNumber;
-    private String type; // "DEPOSIT" or "WITHDRAW"
+    private String type;
     private double amount;
     private LocalDateTime timestamp;
 
-    public Transaction() {}
+    public Transaction() {
+    }
 
-    // Full constructor (when reading from Database)
     public Transaction(int transactionId, String accountNumber, String type, double amount, LocalDateTime timestamp) {
         this.transactionId = transactionId;
         this.accountNumber = accountNumber;
@@ -20,8 +20,6 @@ public class Transaction {
         this.timestamp = timestamp;
     }
 
-    // Constructor without ID (when creating a new transaction before saving to
-    // Database)
     public Transaction(String accountNumber, String type, double amount, LocalDateTime timestamp) {
         this.accountNumber = accountNumber;
         this.type = type;

@@ -14,7 +14,6 @@ public class DatabaseConfig {
         try {
             dotenv = Dotenv.load();
         } catch (Exception e) {
-            // Fallback for IDEs that run the project from the parent d:\sadbProj folder
             dotenv = Dotenv.configure().directory("./Bank-Transaction").load();
         }
     }

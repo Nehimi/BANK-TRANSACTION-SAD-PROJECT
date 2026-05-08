@@ -27,6 +27,11 @@ public class WebController {
 
         final String finalPath = staticPath;
         app = Javalin.create(config -> {
+            config.plugins.enableCors(cors -> {
+                cors.add(it -> {
+                    it.anyHost();
+                });
+            });
             config.staticFiles.add(staticFiles -> {
                 staticFiles.directory = finalPath;
                 staticFiles.location = Location.EXTERNAL;
@@ -41,6 +46,7 @@ public class WebController {
         }).start(port);
 
         // --- API Endpoints ---
+        app.get("/", ctx -> ctx.redirect("/pages/customer.html"));
 
         // 1. Authentication
         app.post("/api/login", this::handleLogin);
@@ -212,7 +218,6 @@ public class WebController {
         String newPin = body.get("newPin");
 
         try {
-            // Reusing accountDAO via bankService if available, or just update directly
             bankService.adminResetPin(accNo, newPin);
             ctx.json(Map.of("status", "success", "message", "Customer PIN has been reset successfully"));
         } catch (Exception e) {

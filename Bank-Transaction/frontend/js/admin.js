@@ -1,5 +1,5 @@
 // EthioBank Admin Integration Script
-const API_BASE = "/api";
+const API_BASE = "http://localhost:8081/api";
 
 let allAccounts = [];
 let allTransactions = [];

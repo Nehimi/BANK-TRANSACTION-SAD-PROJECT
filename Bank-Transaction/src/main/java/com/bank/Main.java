@@ -37,6 +37,7 @@ public class Main {
             } else if (role.equals("2")) {
                 AdminCLI admin = new AdminCLI(bankService, scanner);
                 admin.start();
+
             } else if (role.equals("3") || role.equalsIgnoreCase("exit")) {
                 System.out.println(" Shutting down... Goodbye!");
                 break;
